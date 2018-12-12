@@ -59,25 +59,32 @@ def main():
     # This can be done using v.in.ogr and the 'where' parameter. But in order to use this tool we need 
     # to reproject the data set first to EPSG:32760 using ogr2ogr.
 
-    # Path to data set containing hostels
-    path_hostels = os.path.join(path_data, 'nz_hostels.geojson')
+    # Path to data set containing hostels
+
+    path_hostels = os.path.join(path_data, 'nz_hostels.geojson')
+
+    path_hostels_reprojected = os.path.join(path_data, 'nz_hostels_reprojected.geojson')
+    subprocess.call(['ogr2ogr', '-f', 'geojson', '-t_srs', 'EPSG:32760', path_hostels_reprojected, path_hostels])
+    
+    # Importing the reprojected data set using v.in.ogr to be able to set the "where" parameter
+    gscript.run_command('v.in.ogr', input =path_hostels_reprojected, layer='nz_hostels', output='hostels', where="tourism='hostel'")
+    
+    # Count the hostels within the study area
+    NumberOfHostels = gscript.read_command('v.vect.stats', flags='p', points='hostels', areas='studyarea', type='point,centroid')
+    print("Number of Hostels: " + NumberOfHostels.split('|')[2])
+
+    path_bars = os.path.join(path_data, 'osm_bars.geojson')
 
     # Reproject the data set
-    path_hostels_reprojected = os.path.join(path_data, 'nz_hostels_reprojected.geojson')
-    subprocess.call(['ogr2ogr', '-f', 'geojson', '-t_srs', 'EPSG:32760', path_hostels_reprojected, path_hostels])
+    path_bars_reprojected = os.path.join(path_data, 'osm_bars_reprojected.geojson')
+    subprocess.call(['ogr2ogr', '-f', 'geojson', '-t_srs', 'EPSG:32760', path_bars_reprojected, path_bars])
     
     # Importing the reprojected data set using v.in.ogr to be able to set the "where" parameter
-    gscript.run_command('v.in.ogr', input =path_hostels_reprojected, layer='nz_hostels', output='hostels', where="tourism='hostel'")
+    gscript.run_command('v.in.ogr', input =path_bars_reprojected, layer='osm_bars', output='bars', where="amenity='bar'")
     
     # Count the hostels within the study area
-    NumberOfHostels = gscript.read_command('v.vect.stats', flags='p', points='hostels', areas='studyarea', type='point,centroid')
-    print("Number of hostels: " + NumberOfHostels.split('|')[2])
-
-    # 2.1 Calculate number of Pubs in Auckland using osm_pubs.geojson
-    #-----------------------------------------------------------------
-
-    # add code here ....
-
+    NumberOfBars = gscript.read_command('v.vect.stats', flags='p', points='bars', areas='studyarea', type='point,centroid')
+    print("Number of Bars: " + NumberOfBars.split('|')[2])
 
     # 3. Calculate total length of cycleways 
     # ----------------------------------------
